@@ -39,7 +39,7 @@ function Titulo(props) {
             ${Tag} {
                 color: ${appConfig.theme.colors.neutrals['000']};
                 font-size: 24px;
-                font-weight: 600;
+                font-weight: 600; 
             }
             `}</style>
     </>
