@@ -1,31 +1,46 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzQ2MTc0NSwiZXhwIjoxOTU5MDM3NzQ1fQ.IaIkyodeDa-mU_8HFYD6S15mEdQSWWWzyGjyMqeixhU';
 const SUPABASE_URL = 'https://thjttfxhrcepnjlsxpel.supabase.co';
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
+  const roteamento = useRouter();
+  const usuarioLogado = roteamento.query.username;
+  // console.log('roteamento.query ', roteamento.query);
+  // console.log('usuarioLogado ', usuarioLogado);
   const [mensagem, setMensagem] = React.useState('');
   const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
+
+  function escutaMensagemEmTempoReal() {
+    return supabaseClient
+      .from('mensagens')
+      .on('INSERT', () => {
+        console.log('nova mensagem inserida');
+      })
+      .subscribe();
+  }
 
   React.useEffect(() => {
     supabaseClient
       .from('mensagens')
       .select('*')
-      .order('id',{'ascending':false})
+      .order('id', { 'ascending': false })
       .then(({ data }) => {
-        // console.log("Dados da consulta: ", data);
         setListaDeMensagens(data);
       });
+    escutaMensagemEmTempoReal();
   }, []);
 
   function handleNovaMensagem(novaMensagem) {
     const mensagem = {
       // id: listaDeMensagens.length + 1,
-      de: 'peas',
+      de: usuarioLogado,
       texto: novaMensagem,
     };
 
@@ -124,6 +139,14 @@ export default function ChatPage() {
                 color: appConfig.theme.colors.neutrals[200],
               }}
             />
+
+            <ButtonSendSticker
+              onStickerClick={(sticker) => {
+                // console.log('Componente: ', sticker);
+                handleNovaMensagem(':sticker: ' + sticker);
+              }}
+            />
+
           </Box>
         </Box>
       </Box>
@@ -207,7 +230,17 @@ function MessageList(props) {
                 {(new Date().toLocaleDateString())}
               </Text>
             </Box>
-            {mensagem.texto}
+
+            {mensagem.texto.startsWith(':sticker:')
+              ? (
+                <Image src={mensagem.texto.replace(':sticker:', '')} />
+              )
+              : (
+                mensagem.texto
+              )
+            }
+
+            {/* {mensagem.texto} */}
           </Text>
         );
       })}
